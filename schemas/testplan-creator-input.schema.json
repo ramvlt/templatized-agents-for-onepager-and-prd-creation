@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "testplan-creator-input.schema.json",
+  "title": "Retail Test Plan Creator — Input",
+  "type": "object",
+  "required": ["mode", "initiative_slug", "prd_path"],
+  "properties": {
+    "mode": { "enum": ["create", "update"] },
+    "initiative_slug": { "type": "string" },
+    "prd_path": { "type": "string" },
+    "ac_file_path": { "type": "string" },
+    "nfr_file_path": { "type": "string" },
+    "architecture_path": { "type": "string" },
+    "integration_contracts_path": { "type": "string" },
+    "stories_path": { "type": "string" },
+    "prior_test_plan_path": { "type": "string" },
+    "update_reason": { "type": "string" },
+    "automation_target_pct": { "type": "integer", "minimum": 0, "maximum": 100, "default": 90 },
+    "available_environments": { "type": "array", "items": { "type": "string" } },
+    "tooling_preferences": { "type": "array", "items": { "type": "string" }, "description": "e.g., Playwright, k6, Axe, ZAP" }
+  }
+}

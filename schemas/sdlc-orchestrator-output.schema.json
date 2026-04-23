@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sdlc-orchestrator-output.schema.json",
+  "title": "Retail SDLC Orchestrator — Output",
+  "type": "object",
+  "required": ["initiative_slug", "mode", "current_stage"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["create", "resume", "status", "rerun", "update"] },
+    "current_stage": { "type": "string" },
+    "stages_completed": { "type": "integer", "minimum": 0 },
+    "stages_pending": { "type": "integer", "minimum": 0 },
+    "artifacts_index": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage", "type", "path"],
+        "properties": {
+          "stage": { "type": "string" },
+          "type": { "type": "string" },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "open_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "prompt"],
+        "properties": {
+          "gate": { "type": "string" },
+          "prompt": { "type": "string" },
+          "options": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "pending_decisions": { "type": "array", "items": { "type": "string" } },
+    "next_recommended_action": { "type": "string" }
+  }
+}

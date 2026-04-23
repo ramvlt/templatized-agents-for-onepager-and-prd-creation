@@ -1,0 +1,81 @@
+graph LR
+  subgraph Channels
+    WEB[Web PDP/Cart]
+    IOS[iOS App]
+    AND[Android App]
+    KIOSK[Store Kiosk]
+    ASSOC[Associate App]
+    POS[POS Terminal]
+  end
+
+  subgraph "BFF layer (existing)"
+    WBFF[Web BFF]
+    MBFF[Mobile BFF]
+  end
+
+  subgraph "BOPIS v2 (new)"
+    INVRD[Store-Inventory Read Svc]
+    RESV[Reservation Svc]
+    NOTIF[Associate Notification Adapter]
+    QR[Kiosk QR Verifier]
+    HANDOFF[POS Handoff Adapter]
+  end
+
+  subgraph "Existing platforms"
+    OMS_INV[OMS Inventory API]
+    OMS_ORD[OMS Order API]
+    VAULT[Payments Vault]
+    LOY[Loyalty Platform]
+    NTF[Notifications Platform]
+    FF[Feature Flags]
+    OBS[Observability OTel]
+  end
+
+  subgraph "Data & eventing"
+    REDIS[(Redis — inv cache + hot reservations)]
+    PG[(Aurora Postgres — reservations)]
+    KAFKA[[Kafka reservation.events]]
+  end
+
+  WEB --> WBFF
+  IOS --> MBFF
+  AND --> MBFF
+  WBFF --> INVRD
+  WBFF --> RESV
+  MBFF --> INVRD
+  MBFF --> RESV
+
+  INVRD --> REDIS
+  INVRD -->|cache miss, circuit-broken| OMS_INV
+
+  RESV --> REDIS
+  RESV --> PG
+  RESV --> OMS_ORD
+  RESV --> KAFKA
+
+  KAFKA --> NOTIF
+  KAFKA --> HANDOFF
+  NOTIF --> NTF
+  NTF --> ASSOC
+
+  KIOSK --> QR
+  QR --> RESV
+  QR --> KAFKA
+
+  POS --> HANDOFF
+  HANDOFF --> LOY
+  HANDOFF --> OMS_ORD
+
+  WBFF -.auth.-> VAULT
+  MBFF -.auth.-> VAULT
+
+  WBFF -.flags.-> FF
+  MBFF -.flags.-> FF
+  INVRD -.flags.-> FF
+  RESV -.flags.-> FF
+
+  INVRD -.otel.-> OBS
+  RESV -.otel.-> OBS
+  NOTIF -.otel.-> OBS
+  QR -.otel.-> OBS
+  HANDOFF -.otel.-> OBS

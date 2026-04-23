@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story-decomposer-input.schema.json",
+  "title": "Retail Story Decomposer — Input",
+  "type": "object",
+  "required": ["mode", "initiative_slug", "prd_path", "architecture_path"],
+  "properties": {
+    "mode": { "enum": ["create", "update"] },
+    "initiative_slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "prd_path": { "type": "string" },
+    "ac_file_path": { "type": "string" },
+    "br_file_path": { "type": "string" },
+    "nfr_file_path": { "type": "string" },
+    "architecture_path": { "type": "string" },
+    "adrs_path": { "type": "string", "description": "Directory containing ADRs" },
+    "integration_contracts_path": { "type": "string" },
+
+    "prior_stories_path": { "type": "string" },
+    "updated_prd_path": { "type": "string" },
+    "updated_architecture_path": { "type": "string" },
+    "update_reason": { "type": "string" },
+
+    "estimation_unit": { "enum": ["story-points", "t-shirt", "days"], "default": "story-points" },
+    "team_velocity": { "type": "number", "description": "Points or days per sprint per team" },
+    "team_count": { "type": "integer", "minimum": 1 },
+    "sprint_length_days": { "type": "integer", "default": 10 },
+
+    "epic_taxonomy_override": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional: force a specific set of Epic names; otherwise default retail taxonomy is used"
+    },
+    "generate_sprint_plan": { "type": "boolean", "default": false },
+    "generate_jira_csv": { "type": "boolean", "default": true }
+  }
+}

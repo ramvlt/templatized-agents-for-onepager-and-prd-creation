@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story-decomposer-output.schema.json",
+  "title": "Retail Story Decomposer — Output",
+  "type": "object",
+  "required": ["initiative_slug", "mode", "version", "status", "artifacts", "next_stage_ready"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["create", "update"] },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "status": { "enum": ["success", "partial", "failure"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path"],
+        "properties": {
+          "type": { "enum": ["epics", "stories_json", "jira_import_csv", "dependency_graph", "sprint_plan"] },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "epics": { "type": "integer" },
+        "stories": { "type": "integer" },
+        "subtasks": { "type": "integer" }
+      }
+    },
+    "ac_coverage": { "type": "number" },
+    "component_coverage": { "type": "number" },
+    "nfr_coverage": { "type": "number" },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "no_oversize": { "type": "boolean" },
+        "acyclic_deps": { "type": "boolean" },
+        "ownership_clean": { "type": "boolean" },
+        "dod_present": { "type": "boolean" }
+      }
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "next_stage_ready": { "type": "boolean" },
+    "next_recommended_agent": { "type": "string" }
+  }
+}

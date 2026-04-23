@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "launch-readiness-output.schema.json",
+  "title": "Retail Launch Readiness Auditor — Output",
+  "type": "object",
+  "required": ["initiative_slug", "target_phase", "verdict", "launch_cleared"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "target_phase": { "type": "string" },
+    "target_window": { "type": "string" },
+    "verdict": { "enum": ["GO", "GO_WITH_CONDITIONS", "NO_GO"] },
+    "score_counts": {
+      "type": "object",
+      "properties": {
+        "pass": { "type": "integer" },
+        "fail": { "type": "integer" },
+        "na": { "type": "integer" },
+        "conditional": { "type": "integer" }
+      }
+    },
+    "conditional_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["item", "owner", "due"],
+        "properties": {
+          "item": { "type": "string" },
+          "current": { "type": "string" },
+          "threshold": { "type": "string" },
+          "owner": { "type": "string" },
+          "due": { "type": "string" },
+          "blocks_launch": { "type": "boolean" },
+          "blocks_store_cohort": { "type": "boolean" }
+        }
+      }
+    },
+    "failed_items": { "type": "array", "items": { "type": "object" } },
+    "peak_season_check": {
+      "type": "object",
+      "properties": {
+        "overlap": { "type": "boolean" },
+        "rationale": { "type": "string" }
+      }
+    },
+    "evidence_links": { "type": "object", "additionalProperties": { "type": "string" } },
+    "sign_offs_required": { "type": "array", "items": { "type": "string" } },
+    "next_actions": { "type": "array", "items": { "type": "string" } },
+    "launch_cleared": { "type": "boolean" }
+  }
+}

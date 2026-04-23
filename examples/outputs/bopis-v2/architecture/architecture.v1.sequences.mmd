@@ -1,0 +1,64 @@
+sequenceDiagram
+  autonumber
+  participant C as Customer (Web/iOS)
+  participant BFF as BFF
+  participant INV as Store-Inventory Read Svc
+  participant CACHE as Redis cache
+  participant OMS as OMS Inventory API
+  participant RES as Reservation Svc
+  participant PG as Aurora Postgres
+  participant K as Kafka reservation.events
+  participant NF as Notifications / Assoc App
+
+  %% --- 1. PDP inventory read (happy) ---
+  rect rgba(0,180,0,0.08)
+    Note over C,OMS: PDP inventory read (happy)
+    C->>BFF: GET /pdp/{sku}?store=042
+    BFF->>INV: GET /inventory?store=042&sku=X
+    INV->>CACHE: GET store:042:sku:X
+    CACHE-->>INV: qty=3, fetched 8s ago
+    INV-->>BFF: {qty: 3, staleness_ms: 8000}
+    BFF-->>C: "3 available at Store 042"
+  end
+
+  %% --- 2. Reservation (happy) ---
+  rect rgba(0,120,200,0.08)
+    Note over C,NF: Reservation (happy)
+    C->>BFF: POST /reservations (Idempotency-Key)
+    BFF->>RES: POST /reservations
+    RES->>CACHE: WATCH store:042:sku:X
+    RES->>CACHE: DECR qty (MULTI)
+    RES->>PG: INSERT reservation (90 min TTL)
+    RES->>K: publish reservation.created
+    RES-->>BFF: 201 + reservation_id
+    BFF-->>C: "Reserved for 90 min"
+    K-->>NF: reservation.created
+    NF-->>NF: push to associates at store 042
+  end
+
+  %% --- 3. Concurrent last-unit reservation ---
+  rect rgba(240,120,0,0.08)
+    Note over C,PG: Concurrent last-unit (qty=1)
+    par Customer A
+      C->>RES: POST /reservations (A)
+    and Customer B
+      C->>RES: POST /reservations (B)
+    end
+    RES->>CACHE: WATCH/MULTI (A wins)
+    RES-->>C: 201 to A
+    RES-->>C: 409 to B + alt stores
+  end
+
+  %% --- 4. Graceful degradation (OMS down) ---
+  rect rgba(200,0,60,0.08)
+    Note over C,OMS: Graceful degradation (OMS 5xx)
+    C->>BFF: GET /pdp/{sku}
+    BFF->>INV: GET /inventory
+    INV->>CACHE: miss
+    INV->>OMS: call (timeout 800ms)
+    OMS-->>INV: 5xx
+    INV-->>INV: circuit-breaker OPEN 10s
+    INV-->>BFF: {status: unknown, fallback: true}
+    BFF-->>C: "Check availability in-store" fallback UI
+    Note right of INV: Write path (RES) flag-gated OFF during breaker open
+  end

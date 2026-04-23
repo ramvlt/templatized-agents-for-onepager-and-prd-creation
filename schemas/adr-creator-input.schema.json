@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adr-creator-input.schema.json",
+  "title": "Retail ADR Creator — Input",
+  "type": "object",
+  "required": ["mode", "title", "working_dir"],
+  "properties": {
+    "mode": { "enum": ["create", "supersede"] },
+    "title": { "type": "string" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "If omitted, derived from title" },
+    "working_dir": { "type": "string", "description": "Directory where adrs/ lives" },
+    "initiative_slug": { "type": "string" },
+    "deciders": { "type": "array", "items": { "type": "string" } },
+    "consulted": { "type": "array", "items": { "type": "string" } },
+    "informed": { "type": "array", "items": { "type": "string" } },
+    "prd_drivers": { "type": "array", "items": { "type": "string" } },
+    "retail_domain": { "type": "array", "items": { "type": "string" } },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "pci": { "type": "string" },
+        "privacy": { "type": "string" },
+        "wcag": { "type": "string" },
+        "section_508": { "type": "string" },
+        "tax": { "type": "string" },
+        "localization": { "type": "string" }
+      }
+    },
+    "context": { "type": "string" },
+    "problem_statement": { "type": "string" },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "pros": { "type": "array", "items": { "type": "string" } },
+          "cons": { "type": "array", "items": { "type": "string" } },
+          "retail_implications": { "type": "string" }
+        }
+      }
+    },
+    "chosen_option": { "type": "string" },
+    "reversibility": { "enum": ["Easy", "Moderate", "Hard"] },
+    "revisit_triggers": { "type": "array", "items": { "type": "string" } },
+    "supersedes_adr": { "type": "string", "description": "ADR id being superseded, when mode=supersede" }
+  }
+}

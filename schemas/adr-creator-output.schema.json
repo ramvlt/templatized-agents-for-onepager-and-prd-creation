@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "adr-creator-output.schema.json",
+  "title": "Retail ADR Creator — Output",
+  "type": "object",
+  "required": ["adr_id", "title", "status", "path"],
+  "properties": {
+    "adr_id": { "type": "string", "pattern": "^ADR-[0-9]{3,}$" },
+    "title": { "type": "string" },
+    "status": { "enum": ["Proposed", "Accepted", "Deprecated", "Superseded"] },
+    "path": { "type": "string" },
+    "options_considered": { "type": "integer", "minimum": 2 },
+    "prd_drivers": { "type": "array", "items": { "type": "string" } },
+    "reversibility": { "enum": ["Easy", "Moderate", "Hard"] },
+    "revisit_triggers": { "type": "array", "items": { "type": "string" } },
+    "superseded_by": { "type": ["string", "null"] }
+  }
+}

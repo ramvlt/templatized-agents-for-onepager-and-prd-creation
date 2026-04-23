@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "arch-designer-output.schema.json",
+  "title": "Retail Architecture Designer — Output",
+  "type": "object",
+  "required": ["initiative_slug", "mode", "version", "status", "artifacts", "quality_gates", "next_stage_ready"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["create", "update"] },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "status": { "enum": ["success", "partial", "failure"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path"],
+        "properties": {
+          "type": { "enum": ["architecture", "components_diagram", "sequences_diagram", "deployment_diagram", "integration_contracts", "data_model", "nfr_mechanism_map", "adr"] },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "components": { "type": "integer" },
+        "integrations": { "type": "integer" },
+        "adrs": { "type": "integer" },
+        "sequences": { "type": "integer" }
+      }
+    },
+    "nfr_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "prd_traceable": { "type": "boolean" },
+        "nfr_mapped": { "type": "boolean" },
+        "degradation_designed": { "type": "boolean" },
+        "classified": { "type": "boolean" },
+        "peak_sized": { "type": "boolean" }
+      }
+    },
+    "requires_rework": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "next_stage_ready": { "type": "boolean" },
+    "next_recommended_agent": { "type": "string" }
+  }
+}

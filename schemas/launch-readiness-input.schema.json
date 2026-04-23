@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "launch-readiness-input.schema.json",
+  "title": "Retail Launch Readiness Auditor — Input",
+  "type": "object",
+  "required": ["initiative_slug", "target_launch_phase", "target_launch_window", "prd_path"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "target_launch_phase": { "enum": ["internal-dogfood", "closed-beta", "ramp", "ga", "hypercare"] },
+    "target_launch_window": { "type": "string", "description": "ISO range: YYYY-MM-DD..YYYY-MM-DD" },
+    "prd_path": { "type": "string" },
+    "architecture_path": { "type": "string" },
+    "stories_path": { "type": "string" },
+    "test_plan_path": { "type": "string" },
+    "peak_season_freezes": { "type": "array", "items": { "type": "string" }, "default": ["2026-11-01..2027-01-05"] },
+    "strictness": { "enum": ["lenient", "standard", "strict"], "default": "standard" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Map of evidence type to artifact path / run id / URL"
+    }
+  }
+}

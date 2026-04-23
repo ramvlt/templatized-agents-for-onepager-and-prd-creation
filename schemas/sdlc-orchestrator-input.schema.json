@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sdlc-orchestrator-input.schema.json",
+  "title": "Retail SDLC Orchestrator — Input",
+  "type": "object",
+  "required": ["mode", "initiative_slug"],
+  "properties": {
+    "mode": { "enum": ["create", "resume", "status", "rerun", "update"] },
+    "initiative_slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "working_dir": { "type": "string" },
+    "seed_context": {
+      "type": "object",
+      "description": "Optional seed for mode=create",
+      "properties": {
+        "raw_idea": { "type": "string" },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "sponsor": { "type": "string" },
+        "product_lead": { "type": "string" }
+      }
+    },
+    "stage": {
+      "type": "string",
+      "description": "For mode=rerun: stage id (e.g., '2-architecture')"
+    },
+    "reason": { "type": "string", "description": "For rerun/update modes" },
+    "change_scope": {
+      "type": "array",
+      "items": { "enum": ["onepager", "prd", "architecture", "stories", "test-plan"] },
+      "description": "For mode=update"
+    },
+    "auto_advance": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, reviewer PASS auto-proceeds to next stage (still pauses on PASS_WITH_MINOR / REVISE)"
+    }
+  }
+}

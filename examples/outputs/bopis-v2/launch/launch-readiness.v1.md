@@ -1,0 +1,122 @@
+# BOPIS v2 — Launch Readiness Audit v1
+
+> **Target phase:** GA &nbsp;•&nbsp; **Window:** 2026-09-15 → 2026-10-30 (ramp 10→50→100%)
+> **Audit date:** 2026-09-08 &nbsp;•&nbsp; **Auditor:** `retail-launch-readiness-auditor`
+> **Verdict: GO_WITH_CONDITIONS** (2 conditions, neither launch-blocking)
+
+---
+
+## Checklist results
+
+**PASS: 30 &nbsp;•&nbsp; FAIL: 0 &nbsp;•&nbsp; N/A: 1 &nbsp;•&nbsp; CONDITIONAL: 2**
+
+### Product & Requirements
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 1 | PRD approved | PASS | `prd.v1.md` — signed 2026-05-15 |
+| 2 | Architecture design approved | PASS | `architecture.v1.md` — arch-reviewer PASS |
+| 3 | All P0 Stories complete + ACs demonstrated | PASS | Jira: 47/47 Done, UAT sign-off |
+| 4 | Open P0/P1 bug count = 0 | PASS | Jira query run 2026-09-08 |
+
+### Quality
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 5 | P0 test suite 100% pass | PASS | QE run `qe-run-1029` |
+| 6 | Regression ≥ 99% | PASS | 99.4% |
+| 7 | Load test ≥ 2× peak | PASS | `qe/load/run-1020.pdf` — 24K RPS × 60 min, p95 340ms |
+| 8 | Chaos (OMS/Payments/region) | PASS | `qe/chaos/run-1022.md` |
+| 9 | WCAG 2.2 AA audit | PASS | `compliance/wcag-audit-2026-09-01.pdf` — 0 crit/major |
+| 10 | Section 508 | PASS | Associate App device-lab audit 2026-09-02 |
+| 11 | Contract tests green | PASS | Pact broker 100% |
+
+### Security & Compliance
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 12 | PCI QSA sign-off | PASS | `compliance/pci-qsa-letter-2026-08-28.pdf` — SAQ-A preserved |
+| 13 | Privacy DPIA (CCPA-CPRA) | PASS | `compliance/dpia-2026-08-15.md` |
+| 14 | Security scan (SAST/DAST/SCA/secret) | PASS | 0 criticals; 3 highs triaged |
+| 15 | AuthN/AuthZ review | PASS | Sec review 2026-08-29 |
+| 16 | No PII/PCI in logs | PASS | Scanner run clean |
+| 17 | Right-to-erasure e2e | PASS | Within 30d SLA; verified stage |
+
+### Operations & Reliability
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 18 | Runbook published | PASS | `ops/bopis-v2-runbook.md` |
+| 19 | On-call rotation through hypercare | PASS | `ops/oncall-2026-09.md` |
+| 20 | Rollback drill ≤ 15 min | PASS | `ops/rollback-drill-2026-09-01.md` — 11 min |
+| 21 | Feature flags + kill-switch verified | PASS | `ops/flags.md` |
+| 22 | Observability dashboard + alerts | PASS | `bopis-v2-health` live; 12 alerts green |
+| 23 | SLO + error-budget policy | PASS | Published |
+| 24 | DR failover drill | PASS | us-east-1 → us-west-2 drill 2026-08-25; RTO 22 min |
+
+### Retail-specific
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 25 | Associate training ≥ 95% in rollout cohort | **CONDITIONAL** | 97% overall; Store 051 at 88% — see Conditions |
+| 26 | CSR macros + KB articles | PASS | `cs/macros-update-2026-09-02.md` |
+| 27 | Field/store comms executed | PASS | Huddle deck + signage shipped |
+| 28 | Legal & tax sign-off | PASS | `legal/signoff-2026-09-05.pdf` |
+| 29 | **Peak-season freeze check** | PASS | Window ends 2026-10-30, freeze starts 2026-11-01 — clears with 2-day buffer |
+| 30 | Rollout plan flags match prod | PASS | Flag audit 2026-09-07 |
+
+### Go-Live
+| # | Item | Score | Evidence |
+|---|---|---|---|
+| 31 | Comms plan ready | PASS | Customer email drafted, internal comms scheduled |
+| 32 | Incident playbook tested | PASS | Tabletop 2026-09-04 |
+| 33 | First-24h war-room schedule | **CONDITIONAL** | Room booked; attendee list missing SRE backup — see Conditions |
+
+### N/A
+| # | Item | Rationale |
+|---|---|---|
+| — (localization coverage for EU) | Not in scope V1 | US-only; would re-audit if EU added |
+
+---
+
+## Conditions
+
+| # | Condition | Owner | Due | Blocks? |
+|---|---|---|---|---|
+| C1 | Store 051 training completion to ≥ 95% | Store Manager J. Lee | 2026-09-12 | Blocks Store 051 only; other stores cleared |
+| C2 | Name SRE backup for 24h war-room | SRE Lead A. Patel | 2026-09-14 | Does not block; required day-of |
+
+---
+
+## Peak-season analysis
+
+- Launch window: **2026-09-15 to 2026-10-30**
+- Declared freeze: **2026-11-01 to 2027-01-05**
+- **Overlap: NONE** — 2-day buffer before freeze.
+- **Hypercare plan in freeze:** monitor-only mode; rollback-ready; no new ramp changes.
+
+---
+
+## Top risks & contingencies
+
+| Risk | Mitigation |
+|---|---|
+| OMS stability during ramp | Pre-ramp warm-up calls; breaker + fallback validated |
+| Peak-season edge: traffic higher than 2× | Capacity sized for 3×; warm-pool scheduler on |
+| Associate training gaps | Per-store gate (Store 051 opt out until 95%) |
+| DR scenario during launch | Active-passive validated; RTO 22 min |
+
+---
+
+## Sign-off
+
+| Role | Name | Decision | Date |
+|---|---|---|---|
+| Product Lead | Priya R. | _____ | |
+| Engineering Lead | | _____ | |
+| SRE Lead | A. Patel | _____ | |
+| Security Lead | | _____ | |
+| Privacy Lead | | _____ | |
+| Retail Ops Lead | | _____ | |
+| Business Sponsor | Dana K. | _____ | |
+
+**Final verdict with signatures: GO_WITH_CONDITIONS — cleared for GA launch on or after 2026-09-15, subject to C1 & C2 closure.**
+
+---
+
+*Generated by `retail-launch-readiness-auditor` v1.0*

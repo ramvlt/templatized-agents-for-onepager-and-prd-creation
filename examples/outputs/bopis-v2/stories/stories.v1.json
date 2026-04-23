@@ -1,0 +1,327 @@
+{
+  "initiative_slug": "bopis-v2",
+  "version": "v1",
+  "estimation_unit": "story-points",
+  "sample_stories": [
+    {
+      "id": "STORY-0001",
+      "epic": "E3",
+      "title": "[Reservation Svc] Feature-flag scaffolding & kill-switch",
+      "narrative": {
+        "as_a": "BOPIS engineer",
+        "i_want": "feature flags and a kill-switch wired into Reservation Svc before any functional work",
+        "so_that": "we can safely ramp and instantly rollback during pilot and GA"
+      },
+      "acceptance_criteria": [
+        "LaunchDarkly client integrated in Reservation Svc",
+        "Flag `bopis_v2_enabled` gates the POST /reservations endpoint end-to-end",
+        "Kill-switch flag `bopis_v2_kill` short-circuits writes within ≤ 30s of flip",
+        "Flag states visible in `bopis-v2-health` dashboard"
+      ],
+      "maps_to_prd_ac": ["AC-002", "AC-014"],
+      "maps_to_components": ["Reservation Svc"],
+      "channels": [],
+      "estimate_points": 3,
+      "priority": "P0",
+      "owner_team": "BOPIS pod",
+      "dependencies": [],
+      "dod": [
+        "Code implemented + peer-reviewed",
+        "Unit tests ≥ 80% on flag branching",
+        "Integration test: flip kill-switch under load, verify < 30s effect",
+        "Runbook entry: how to flip kill-switch",
+        "Deployed to stage"
+      ]
+    },
+    {
+      "id": "STORY-0002",
+      "epic": "E3",
+      "title": "[Reservation Svc] Schema migration expand — reservations + pickup_events tables",
+      "narrative": {
+        "as_a": "BOPIS engineer",
+        "i_want": "new tables created via an additive migration",
+        "so_that": "downstream work can write against the real schema without risk to existing paths"
+      },
+      "acceptance_criteria": [
+        "Aurora migration adds `reservation` and `pickup_event` tables per data-model.v1.md",
+        "Migration is backward-compatible (no existing reads/writes affected)",
+        "Indexes on (store_id, expires_at), (reservation_id, event_type)",
+        "Rollback script verified in stage"
+      ],
+      "maps_to_prd_ac": ["AC-002"],
+      "maps_to_components": ["Reservation Svc", "Aurora Postgres"],
+      "estimate_points": 2,
+      "priority": "P0",
+      "owner_team": "BOPIS pod",
+      "dependencies": ["STORY-0001"],
+      "dod": [
+        "Migration script peer-reviewed",
+        "Rollback tested",
+        "Schema documented in data-model"
+      ]
+    },
+    {
+      "id": "STORY-0003",
+      "epic": "E3",
+      "title": "[Reservation Svc] Atomic decrement + 90-min hold (happy path)",
+      "narrative": {
+        "as_a": "BOPIS shopper",
+        "i_want": "my reservation to hold inventory for 90 minutes exactly",
+        "so_that": "the store has my item when I arrive and it's not double-sold"
+      },
+      "acceptance_criteria": [
+        "POST /reservations with Idempotency-Key atomically decrements inventory via Redis WATCH/MULTI",
+        "Inserts reservation row in Aurora with expires_at = now + 90 min",
+        "Returns 201 with reservation_id within p95 ≤ 300ms",
+        "Publishes `reservation.created` on Kafka with trace-id",
+        "Idempotent: identical Idempotency-Key returns prior result without double-writing"
+      ],
+      "maps_to_prd_ac": ["AC-002", "AC-014"],
+      "maps_to_components": ["Reservation Svc", "Redis", "Aurora Postgres", "Kafka"],
+      "estimate_points": 8,
+      "priority": "P0",
+      "owner_team": "BOPIS pod",
+      "dependencies": ["STORY-0001", "STORY-0002"],
+      "dod": [
+        "Unit tests (happy + idempotency)",
+        "Integration tests against stage Redis + Aurora",
+        "Contract test for `reservation.created` event",
+        "p95 measured in load harness",
+        "Observability: trace + events emitted",
+        "Runbook: how to manually release a stuck reservation"
+      ]
+    },
+    {
+      "id": "STORY-0004",
+      "epic": "E3",
+      "title": "[Reservation Svc] Concurrent last-unit: prevent oversell",
+      "narrative": {
+        "as_a": "store operator",
+        "i_want": "exactly one customer to win the last unit",
+        "so_that": "we never oversell and never disappoint a customer on arrival"
+      },
+      "acceptance_criteria": [
+        "Given inventory = 1 and two concurrent reservation attempts, exactly one succeeds",
+        "Loser receives 409 with `alt_stores[]` payload (up to 3 within 25 mi)",
+        "Inventory count is never negative (audit check emits alert on divergence)",
+        "Stress test: 1000 parallel attempts on qty=5 → exactly 5 wins, 995 losses, 0 oversells"
+      ],
+      "maps_to_prd_ac": ["AC-005"],
+      "maps_to_components": ["Reservation Svc", "Redis", "Aurora Postgres"],
+      "estimate_points": 5,
+      "priority": "P0",
+      "owner_team": "BOPIS pod",
+      "dependencies": ["STORY-0003"],
+      "dod": [
+        "Unit tests on WATCH/MULTI retry path",
+        "Concurrency stress test at 1000 parallel",
+        "Alert wired for inventory divergence",
+        "Observability: divergence events emitted"
+      ]
+    },
+    {
+      "id": "STORY-0012",
+      "epic": "E4",
+      "title": "[Inventory Read Svc] Shadow mode — log OMS vs cache divergence for 1 week pre-pilot",
+      "narrative": {
+        "as_a": "BOPIS PM",
+        "i_want": "a shadow-mode comparison of cached vs live OMS inventory",
+        "so_that": "we validate our 30s staleness assumption on real traffic before any customer sees a cache result"
+      },
+      "acceptance_criteria": [
+        "Shadow mode flag `inv_read_shadow` samples 5% of prod traffic",
+        "For each sampled request: return live OMS result to user AND log `cached_qty` vs `live_qty` with timestamps",
+        "Divergence report generated daily; human review before enabling read-from-cache",
+        "No customer impact in shadow mode"
+      ],
+      "maps_to_prd_ac": ["AC-001"],
+      "maps_to_components": ["Store-Inventory Read Svc"],
+      "estimate_points": 5,
+      "priority": "P0",
+      "owner_team": "BOPIS pod",
+      "dependencies": ["STORY-0010", "STORY-0011"],
+      "dod": [
+        "Shadow mode runnable via flag",
+        "Divergence report dashboard",
+        "1-week shadow run signed off by PM + Ops before enabling read-from-cache"
+      ]
+    },
+    {
+      "id": "STORY-0030",
+      "epic": "E6",
+      "title": "[Associate App] Arrival notification via Kafka consumer",
+      "narrative": {
+        "as_a": "store associate on shift",
+        "i_want": "an in-app 'customer arrived' notification within 5 seconds of the kiosk scan",
+        "so_that": "I can greet the customer and hand off promptly"
+      },
+      "acceptance_criteria": [
+        "Consume `pickup.arrived` from Kafka",
+        "Route to on-shift associates at the relevant store via Notifications Platform push",
+        "Push latency p95 ≤ 5s from event to device",
+        "Respects quiet-hours and associate role filters",
+        "Section 508 accessibility validated on the Associate App screen"
+      ],
+      "maps_to_prd_ac": ["AC-004", "AC-007"],
+      "maps_to_components": ["Associate Notification Adapter", "Notifications Platform", "Associate App"],
+      "estimate_points": 5,
+      "priority": "P0",
+      "owner_team": "In-Store pod",
+      "dependencies": ["STORY-0003", "STORY-0020"],
+      "dod": [
+        "Unit + integration tests",
+        "Manual 508 audit",
+        "End-to-end latency measured",
+        "Push fallback if device offline"
+      ]
+    },
+    {
+      "id": "STORY-0038",
+      "epic": "E7",
+      "title": "[QE] Peak load test — 12K RPS inventory read for 60 min",
+      "narrative": {
+        "as_a": "SRE",
+        "i_want": "a reproducible load-test harness meeting PRD NFR targets",
+        "so_that": "we enter peak season with documented headroom",
+        "note": "Also validates AC-009 performance acceptance criterion"
+      },
+      "acceptance_criteria": [
+        "k6 harness runs 12K RPS sustained 60 min against stage",
+        "p95 ≤ 400ms, error rate ≤ 0.1%",
+        "Cache hit ratio ≥ 95%",
+        "No cache stampede observed; coalescing effectiveness measured",
+        "Report archived with pass/fail per NFR"
+      ],
+      "maps_to_prd_ac": ["AC-009"],
+      "maps_to_components": ["Store-Inventory Read Svc", "Redis"],
+      "estimate_points": 5,
+      "priority": "P0",
+      "owner_team": "QE + SRE",
+      "dependencies": ["STORY-0012", "STORY-0013"],
+      "dod": [
+        "Harness in CI",
+        "Passing run archived",
+        "Report signed off by SRE + arch"
+      ]
+    },
+    {
+      "id": "STORY-0039",
+      "epic": "E7",
+      "title": "[QE] Chaos test — OMS outage + Payments 5xx",
+      "narrative": {
+        "as_a": "SRE",
+        "i_want": "verified graceful degradation when OMS or Payments fails",
+        "so_that": "customer browse continues and we honor AC-003"
+      },
+      "acceptance_criteria": [
+        "Toxiproxy/chaos script kills OMS for 5 min in stage under load",
+        "Browse path never returns customer-visible error",
+        "Circuit breaker opens within 10s; fallback UI renders",
+        "Payments 5xx scenario: retry once then 'try another method' message",
+        "Error-budget burn alerts fire as expected"
+      ],
+      "maps_to_prd_ac": ["AC-003"],
+      "maps_to_components": ["Store-Inventory Read Svc", "BFF"],
+      "estimate_points": 5,
+      "priority": "P0",
+      "owner_team": "QE + SRE",
+      "dependencies": ["STORY-0012"],
+      "dod": [
+        "Chaos script in CI",
+        "Passing run archived",
+        "Runbook entry updated from learnings"
+      ]
+    },
+    {
+      "id": "STORY-0040",
+      "epic": "E7",
+      "title": "[QE] WCAG 2.2 AA audit + fix cycle on customer-facing surfaces",
+      "narrative": {
+        "as_a": "accessibility lead",
+        "i_want": "automated and manual WCAG 2.2 AA verification before GA",
+        "so_that": "we comply with AC-008 and do not ship a barrier to AT users"
+      },
+      "acceptance_criteria": [
+        "Axe automated in CI on PDP inventory module, cart, reservation confirmation",
+        "Manual VoiceOver + TalkBack verification logged",
+        "All critical + major findings fixed; minor tracked",
+        "Sign-off from accessibility lead"
+      ],
+      "maps_to_prd_ac": ["AC-008"],
+      "maps_to_components": ["Web BFF", "Mobile BFF", "Design System"],
+      "estimate_points": 8,
+      "priority": "P0",
+      "owner_team": "QE + Web/Mobile",
+      "dependencies": ["STORY-0007", "STORY-0015"],
+      "dod": [
+        "Axe CI passing",
+        "Manual audit report attached",
+        "Accessibility lead sign-off"
+      ]
+    },
+    {
+      "id": "STORY-0046",
+      "epic": "E8",
+      "title": "[Ops] Runbook + on-call rotation + SLO dashboard",
+      "narrative": {
+        "as_a": "SRE on call",
+        "i_want": "a BOPIS v2 runbook, dashboards, and rotation before pilot",
+        "so_that": "incidents are diagnosable and actionable on night 1"
+      },
+      "acceptance_criteria": [
+        "`bopis-v2-health` dashboard live (RED metrics + business events + SLO burn-rate)",
+        "Alerts: OMS breaker open, oversell divergence, SLO burn > 2× budget, DLQ > 10",
+        "Runbook covers: kill-switch, force-release reservation, replay DLQ, failover to us-west-2",
+        "On-call rotation assigned for first 4 weeks post-pilot",
+        "Drill: kill-switch + failover exercised pre-pilot"
+      ],
+      "maps_to_prd_ac": ["AC-014"],
+      "maps_to_components": ["All new services", "Observability"],
+      "estimate_points": 10,
+      "priority": "P0",
+      "owner_team": "SRE + BOPIS pod",
+      "dependencies": ["STORY-0003", "STORY-0012", "STORY-0038"],
+      "dod": [
+        "Dashboard + alerts live in prod",
+        "Runbook peer-reviewed",
+        "Drill completed & documented"
+      ]
+    },
+    {
+      "id": "STORY-0047",
+      "epic": "E8",
+      "title": "[Rollout] Associate training e-learning + launch-day huddle deck",
+      "narrative": {
+        "as_a": "retail ops PM",
+        "i_want": "pilot-store associates trained on the new flow before go-live",
+        "so_that": "the first real customer pickup is smooth"
+      },
+      "acceptance_criteria": [
+        "30-min e-learning module shipped via LMS; completion tracked per associate",
+        "Huddle deck (5 min) for launch-day morning meeting",
+        "100% completion in 5 pilot stores before pilot start",
+        "FAQ + escalation card posted at service desk"
+      ],
+      "maps_to_prd_ac": [],
+      "maps_to_components": [],
+      "estimate_points": 8,
+      "priority": "P0",
+      "owner_team": "Retail Ops + PM",
+      "dependencies": ["STORY-0003", "STORY-0020", "STORY-0030"],
+      "dod": [
+        "E-learning live in LMS",
+        "100% completion in pilot stores",
+        "Huddle deck published"
+      ]
+    }
+  ],
+  "coverage_matrix_summary": {
+    "ac_to_story_coverage": 1.0,
+    "component_to_story_coverage": 1.0,
+    "nfr_to_story_coverage": 1.0,
+    "acyclic_deps": true,
+    "oversize_stories": 0,
+    "cross_team_stories": 0
+  },
+  "note": "This JSON shows 11 representative Stories out of 47. Full decomposition lives in this file in a real run."
+}

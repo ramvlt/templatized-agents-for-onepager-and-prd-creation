@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "arch-designer-input.schema.json",
+  "title": "Retail Architecture Designer — Input",
+  "type": "object",
+  "required": ["mode", "initiative_slug", "prd_path"],
+  "properties": {
+    "mode": { "enum": ["create", "update"] },
+    "initiative_slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "prd_path": { "type": "string" },
+    "ac_file_path": { "type": "string" },
+    "br_file_path": { "type": "string" },
+    "nfr_file_path": { "type": "string" },
+    "prd_review_path": { "type": "string" },
+    "prior_architecture_path": { "type": "string" },
+    "updated_prd_path": { "type": "string" },
+    "update_reason": { "type": "string" },
+
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "cloud": { "enum": ["aws", "azure", "gcp", "on-prem", "hybrid", "multi-cloud"] },
+        "regions": { "type": "array", "items": { "type": "string" } },
+        "data_residency": { "type": "array", "items": { "type": "string" } },
+        "existing_platforms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "owner"],
+            "properties": {
+              "name": { "type": "string" },
+              "owner": { "type": "string" },
+              "integration_style": { "enum": ["rest", "grpc", "event-async", "batch", "other"] },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "language_runtime_standards": { "type": "array", "items": { "type": "string" } },
+        "golden_paths": { "type": "array", "items": { "type": "string" }, "description": "e.g., 'org auth', 'org caching', 'org eventing', 'org observability'" },
+        "build_vs_buy_notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "peak_multiplier": { "type": "number", "default": 2.0, "description": "Capacity buffer above PRD peak target" },
+    "target_adrs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional: specific decisions for which ADRs must be produced"
+    }
+  }
+}

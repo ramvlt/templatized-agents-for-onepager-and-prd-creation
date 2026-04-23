@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "testplan-creator-output.schema.json",
+  "title": "Retail Test Plan Creator — Output",
+  "type": "object",
+  "required": ["initiative_slug", "version", "status", "artifacts"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["create", "update"] },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "status": { "enum": ["success", "partial", "failure"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path"],
+        "properties": {
+          "type": { "enum": ["test_plan", "test_cases", "traceability", "environments"] },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "test_cases": { "type": "integer" },
+        "nfr_strategies": { "type": "integer" },
+        "channels_covered": { "type": "integer" }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "ac_to_tc": { "type": "number" },
+        "nfr_to_strategy": { "type": "number" },
+        "channel_to_tc": { "type": "number" }
+      }
+    },
+    "automation_target_pct": { "type": "integer" },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "accessibility_strategy": { "type": "boolean" },
+        "pci_strategy": { "type": "boolean" },
+        "chaos_strategy": { "type": "boolean" },
+        "load_strategy": { "type": "boolean" },
+        "rollback_drill": { "type": "boolean" },
+        "offline_strategy": { "type": "boolean" }
+      }
+    },
+    "next_stage_ready": { "type": "boolean" },
+    "next_recommended_agent": { "type": "string" }
+  }
+}
