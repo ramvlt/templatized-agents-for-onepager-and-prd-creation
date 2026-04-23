@@ -152,24 +152,54 @@ Every agent enforces retail-specific quality gates the moment they become releva
 
 ## Install
 
-**Option 1 — Per-project (recommended)**
+Cursor sessions discover Claude Code subagents from two locations:
+- `~/.claude/agents/*.md` — **global** (available to every Cursor project)
+- `<project>/.claude/agents/*.md` — **per-project** (overrides / extends global)
+
+Use the bundled installer.
+
+**Global — available to every Cursor session (recommended)**
 
 ```bash
-# from your retail project root
-mkdir -p .claude/agents
-cp /path/to/this/repo/agents/*.md .claude/agents/
-cp -r /path/to/this/repo/templates /path/to/this/repo/schemas .claude/
+./install.sh
 ```
 
-**Option 2 — Globally for all projects**
+Installs:
+- `agents/*.md`    → `~/.claude/agents/` (flat, alongside any existing global agents)
+- `schemas/*.json` → `~/.claude/agents/_schemas/retail/`
+- `templates/*.md` → `~/.claude/agents/_templates/retail/`
+
+**Global — symlinked (edits in this repo flow live into every session)**
 
 ```bash
-cp agents/*.md ~/.claude/agents/
-mkdir -p ~/.claude/retail-artifacts
-cp -r templates schemas ~/.claude/retail-artifacts/
+./install.sh --symlink
 ```
 
-Claude Code auto-discovers `.claude/agents/*.md` and surfaces them by `name` to the Task tool / orchestrating agent.
+**Per-project only**
+
+```bash
+./install.sh --project /path/to/your/retail-project
+```
+
+Installs into `<project>/.claude/agents/`, `<project>/.claude/schemas/retail/`, `<project>/.claude/templates/retail/`.
+
+**Uninstall (global)**
+
+```bash
+./install.sh --uninstall
+```
+
+### Verify agents are loaded
+
+Open any Cursor session (new project, no `.claude/` folder needed) and ask:
+
+```
+List the retail-* agents you can delegate to.
+```
+
+You should see all 12 (`retail-sdlc-orchestrator`, `retail-onepager-creator`, `retail-onepager-reviewer`, `retail-prd-creator`, `retail-prd-reviewer`, `retail-arch-designer`, `retail-arch-reviewer`, `retail-adr-creator`, `retail-story-decomposer`, `retail-story-reviewer`, `retail-testplan-creator`, `retail-launch-readiness-auditor`).
+
+If you add/edit agents later, rerun `./install.sh` (or use `--symlink` once and edits will be picked up automatically on next session).
 
 ---
 
