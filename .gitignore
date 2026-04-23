@@ -1,0 +1,38 @@
+# OS
+.DS_Store
+Thumbs.db
+._*
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Cursor / Claude local state
+.cursor/
+.claude/local/
+.claude/cache/
+
+# Generated initiative artifacts (keep examples/ committed, ignore live runs)
+retail-initiatives/
+**/*.run.json.bak
+**/*.tmp
+**/*.log
+
+# Node / Python (in case tooling is added later)
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Misc
+.coverage
+coverage/
+dist/
+build/

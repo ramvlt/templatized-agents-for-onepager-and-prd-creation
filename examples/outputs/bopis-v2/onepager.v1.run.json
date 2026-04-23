@@ -1,0 +1,23 @@
+{
+  "initiative_slug": "bopis-v2",
+  "mode": "batch",
+  "version": "v1",
+  "status": "success",
+  "artifact_path": "examples/outputs/bopis-v2/onepager.v1.md",
+  "quality_gates": {
+    "all_sections_filled": true,
+    "primary_kpi_present": true,
+    "guardrail_kpi_present": true,
+    "out_of_scope_declared": true,
+    "compliance_addressed": true,
+    "no_architecture_leak": true,
+    "peak_season_checked": true
+  },
+  "open_questions": [
+    "Reserve-before-auth vs reserve-after-auth ordering",
+    "Kiosk QR token source (device vs server)"
+  ],
+  "evidence_gaps": [],
+  "next_stage_ready": true,
+  "next_recommended_agent": "retail-onepager-reviewer"
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reviewer-input.schema.json",
+  "title": "Retail One-Pager / PRD Reviewer — Input",
+  "type": "object",
+  "required": ["artifact_path"],
+  "properties": {
+    "artifact_path": { "type": "string", "description": "Path to one-pager .md or PRD .md" },
+    "one_pager_path": { "type": "string", "description": "For PRD review: path to source one-pager for traceability" },
+    "ac_file_path": { "type": "string", "description": "For PRD review: path to acceptance-criteria.v{N}.json" },
+    "br_file_path": { "type": "string", "description": "For PRD review: path to business-rules.v{N}.md" },
+    "nfr_file_path": { "type": "string", "description": "For PRD review: path to nfrs.v{N}.md" },
+    "strictness": { "enum": ["lenient", "standard", "strict"], "default": "standard" },
+    "peak_season_freezes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "e.g., ['2026-11-01..2027-01-05']",
+      "default": ["2026-11-01..2027-01-05"]
+    }
+  }
+}

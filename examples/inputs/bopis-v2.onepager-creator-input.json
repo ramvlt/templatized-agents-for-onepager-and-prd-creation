@@ -1,0 +1,105 @@
+{
+  "mode": "batch",
+  "initiative_slug": "bopis-v2",
+  "auto_approve": false,
+  "identity": {
+    "initiative_name": "BOPIS v2 — Real-time Inventory & 90-min Reservation",
+    "product_lead": "Priya R.",
+    "business_sponsor": "VP Omnichannel — Dana K.",
+    "retail_domains": ["ecom", "in-store-pos", "fulfillment", "loyalty"],
+    "channels": ["web", "ios", "android", "pos", "associate-app", "kiosk"],
+    "regions": ["US"]
+  },
+  "problem": {
+    "customer_pain": "Customers reserve items for in-store pickup, arrive, and the item is out of stock ~9% of the time. This breaks trust and drives 40k/mo support contacts.",
+    "business_cost_today": "$14.6M/yr revenue at risk from abandoned BOPIS orders + $1.8M/yr contact-center cost + 11 pt NPS drop among pickup users.",
+    "evidence": [
+      { "type": "analytics", "reference": "BigQuery: bopis_reservation_fulfillment rate Q1 2026 = 91.0%" },
+      { "type": "voc", "reference": "Survey S-412: 73 responses citing 'item not there when I arrived'" },
+      { "type": "ticket-volume", "reference": "Zendesk tag bopis-oos: 40,114 tickets last 12mo" },
+      { "type": "competitor", "reference": "Competitor A launched real-time store inventory Q4 2025 (teardown link)" }
+    ]
+  },
+  "why_now": [
+    "Competitor A real-time inventory launch is converting our BOPIS customers (traffic study shows 6% share loss).",
+    "OMS v3 ships Q2 with the inventory API we need; window closes if we don't consume it.",
+    "Store associate union contract renegotiation Q4 — training changes must precede it."
+  ],
+  "proposed_solution": "Surface real-time store-level inventory on PDP, cart, and checkout. Reserve picked items for 90 minutes with immediate inventory decrement. Notify store associates via Associate App when a reservation is created, and again when the customer arrives. Gracefully degrade to 'check availability in-store' when OMS is unreachable so browse is never blocked.",
+  "target_audience": [
+    { "segment": "Loyalty Tier-2 + Tier-3 shoppers within 25 mi of a store", "channel": "web, ios, android", "annual_volume": "4.2M shoppers", "why_they_matter": "54% of BOPIS revenue; highest retention tier" },
+    { "segment": "Store associates at ~1,200 US stores", "channel": "associate-app, pos", "annual_volume": "22,000 users", "why_they_matter": "Fulfillment quality directly drives customer NPS" },
+    { "segment": "Fulfillment managers", "channel": "ops console", "annual_volume": "1,200 users", "why_they_matter": "Load balancing across stores" }
+  ],
+  "scope": {
+    "in_scope": [
+      "Real-time store inventory on PDP, cart, and checkout across web/iOS/Android",
+      "90-min reservation with immediate inventory decrement",
+      "Associate App reservation + arrival notification",
+      "Kiosk self-pickup with QR scan",
+      "Loyalty points accrual at pickup completion",
+      "Graceful degradation when OMS unavailable"
+    ],
+    "out_of_scope": [
+      "Same-day delivery orchestration (separate initiative)",
+      "Locker hardware deployment (hardware RFP in flight)",
+      "International rollout (US only in V1)",
+      "Grocery/perishables (different fulfillment physics)"
+    ],
+    "deferred_v2": [
+      "Curbside pickup UI",
+      "Reservation extension self-service",
+      "Multi-store reservation (split pickup)"
+    ]
+  },
+  "success_metrics": {
+    "primary": [
+      { "metric": "BOPIS fulfillment rate (reserved → picked up successfully)", "baseline": "91.0%", "target": "≥ 97.5%", "window": "90 days post-GA, steady state", "source": "BigQuery oms.order_events" },
+      { "metric": "BOPIS attach rate on PDP sessions within 25mi of a store", "baseline": "7.2%", "target": "12.0%", "window": "90 days post-GA", "source": "Adobe Analytics + CDP" },
+      { "metric": "Store fulfillment cycle time (reservation → ready)", "baseline": "42 min", "target": "≤ 25 min", "window": "steady-state month", "source": "OMS order_events" }
+    ],
+    "guardrails": [
+      "PDP p95 load time must not regress beyond 2.2s",
+      "Checkout error rate must stay ≤ 0.8%",
+      "Store NPS (BOPIS segment) must not drop from current 47",
+      "Refund rate must not increase > 0.2 pt"
+    ]
+  },
+  "rollout_timeline": {
+    "phases": [
+      { "phase": "discovery", "window": "2026-Q2 weeks 1-3", "scope": "PRD + arch + Figma + OMS spike", "exit_criteria": "Arch review passed, OMS contract signed off" },
+      { "phase": "build", "window": "2026-Q2 weeks 4-12", "scope": "MVP code-complete, flag-gated", "exit_criteria": "All P0 ACs automated" },
+      { "phase": "pilot", "window": "2026-Q3 weeks 1-4", "scope": "5 pilot stores + 2% web traffic", "exit_criteria": "Guardrails green, fulfillment rate ≥ 95% in pilot" },
+      { "phase": "ga", "window": "2026-Q3 week 5 through Q4 week 4 (ramp 10→50→100%)", "scope": "All stores + 100% web", "exit_criteria": "KPI targets met or trending" },
+      { "phase": "hypercare", "window": "2 weeks post-GA completion", "scope": "Monitoring + hotfix", "exit_criteria": "No P0/P1 open" }
+    ],
+    "peak_season_freezes": ["2026-11-01..2027-01-05"]
+  },
+  "cost_loe": {
+    "engineering_tshirt": "L",
+    "third_party_cost": "$120K/yr (push notification vendor uplift + inventory messaging)",
+    "infra_run_rate": "$18K/mo (cache + API gateway scale-up)",
+    "capex_year1": "$2.4M",
+    "opex_annual": "$336K"
+  },
+  "dependencies_and_risks": {
+    "platform_teams": ["OMS", "Inventory Service", "Payments", "Loyalty", "Associate App", "Store IoT", "Notifications"],
+    "third_parties": ["Push notification vendor", "Address/geo verification", "Receipt email service"],
+    "data_sources": ["Store master with geo-coords", "Product catalog", "Live inventory feed"],
+    "top_risks": [
+      { "risk": "OMS v3 inventory API slips past Q2 week 6", "likelihood": "M", "impact": "H", "mitigation": "Weekly sync with OMS PM; fallback plan to cache + polling in V1.1" },
+      { "risk": "Inventory accuracy < 99% undermines real-time promise", "likelihood": "M", "impact": "H", "mitigation": "Data audit + shrinkage compensation + 30s staleness flag" },
+      { "risk": "Store associate training not ready before pilot", "likelihood": "L", "impact": "M", "mitigation": "Training plan locked in discovery phase; e-learning shipped Q2 week 10" }
+    ]
+  },
+  "compliance_flags": {
+    "pci": "flag-only",
+    "privacy": "material",
+    "accessibility": "showstopper",
+    "localization": "flag-only"
+  },
+  "open_questions": [
+    "Do we reserve inventory before payment auth or after? (leaning: reserve → auth → confirm)",
+    "Kiosk QR: device-generated or server-generated token?"
+  ]
+}

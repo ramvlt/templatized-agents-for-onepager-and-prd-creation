@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "reviewer-output.schema.json",
+  "title": "Retail One-Pager / PRD Reviewer — Output",
+  "type": "object",
+  "required": ["artifact_path", "verdict", "scores", "blocking_findings"],
+  "properties": {
+    "artifact_path": { "type": "string" },
+    "verdict": { "enum": ["PASS", "PASS_WITH_MINOR", "REVISE"] },
+    "scores": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0, "maximum": 3 }
+    },
+    "blocking_findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "major_findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "minor_findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "mandatory_compliance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "required": { "type": "boolean" },
+          "addressed": { "type": "boolean" },
+          "evidence": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "traceability": {
+      "type": "object",
+      "properties": {
+        "goal_to_ac_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "br_to_ac_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "capability_to_ac_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+        "uncovered": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "acs": { "type": "integer" },
+        "brs": { "type": "integer" },
+        "nfrs": { "type": "integer" },
+        "journeys": { "type": "integer" }
+      }
+    },
+    "arch_leak_hits": { "type": "array", "items": { "type": "string" } },
+    "ready_for_next_stage": { "type": "boolean" },
+    "recommended_next_action": { "type": "string" }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "required": ["dimension", "finding", "fix"],
+      "properties": {
+        "dimension": { "type": "string" },
+        "location": { "type": "string" },
+        "finding": { "type": "string" },
+        "fix": { "type": "string" }
+      }
+    }
+  }
+}

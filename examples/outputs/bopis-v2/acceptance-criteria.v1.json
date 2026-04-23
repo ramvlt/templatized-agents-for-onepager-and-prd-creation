@@ -1,0 +1,261 @@
+{
+  "initiative_slug": "bopis-v2",
+  "version": "v1",
+  "acceptance_criteria": [
+    {
+      "id": "AC-001",
+      "title": "Real-time inventory accuracy on PDP",
+      "priority": "P0",
+      "given": [
+        "A product with inventory = 3 at Store #042",
+        "The customer's preferred store is #042"
+      ],
+      "when": "The customer loads the PDP",
+      "then": [
+        "The page displays '3 available at {storeName}' within p95 ≤ 400ms",
+        "The displayed count matches OMS inventory within a ≤ 30s staleness window",
+        "If staleness > 30s, a subtle 'refresh' affordance is shown"
+      ],
+      "test_type": "e2e",
+      "channels": ["web", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper"],
+      "maps_to_goal": "G1-reduce-oos-surprise",
+      "maps_to_br": "BR-05",
+      "test_data_requirements": "Seed Store #042 inventory; deterministic clock"
+    },
+    {
+      "id": "AC-002",
+      "title": "90-minute reservation hold with immediate decrement",
+      "priority": "P0",
+      "given": ["A customer selects 'Pick up in store'"],
+      "when": "They confirm the reservation",
+      "then": [
+        "The item is held for exactly 90 minutes",
+        "Inventory count decrements immediately and is visible to other sessions within 2s",
+        "Customer receives confirmation email within 60s",
+        "On expiry without pickup, inventory auto-releases and customer is notified"
+      ],
+      "test_type": "e2e",
+      "channels": ["web", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper"],
+      "maps_to_goal": "G1-reduce-oos-surprise",
+      "maps_to_br": "BR-03"
+    },
+    {
+      "id": "AC-003",
+      "title": "Graceful degradation when OMS unavailable",
+      "priority": "P0",
+      "given": ["OMS inventory API returns 5xx or times out > 800ms"],
+      "when": "The customer loads a PDP",
+      "then": [
+        "Product page still renders with full content",
+        "Store-inventory module shows 'Check availability in-store' fallback",
+        "No error is surfaced to the customer",
+        "Circuit breaker opens for 30s; event is logged at WARN level"
+      ],
+      "test_type": "integration",
+      "channels": ["web", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper"],
+      "maps_to_goal": "G3-never-block-browse"
+    },
+    {
+      "id": "AC-004",
+      "title": "Associate notification on new reservation and arrival",
+      "priority": "P0",
+      "given": ["A reservation is confirmed for Store #042"],
+      "when": "The reservation event is emitted",
+      "then": [
+        "The on-shift associate cohort at Store #042 receives an in-app notification within 30s",
+        "On customer arrival (kiosk scan), a second 'arrived' notification fires within 5s",
+        "Notifications respect quiet hours and associate role filters"
+      ],
+      "test_type": "e2e",
+      "channels": ["associate-app"],
+      "personas": ["Store associate"],
+      "maps_to_goal": "G2-reduce-cycle-time"
+    },
+    {
+      "id": "AC-005",
+      "title": "Concurrent reservation on last unit",
+      "priority": "P0",
+      "given": ["Store #042 has inventory = 1 for SKU X", "Customer A and Customer B both attempt to reserve simultaneously"],
+      "when": "Both confirmations are submitted within 2s of each other",
+      "then": [
+        "Exactly one reservation succeeds",
+        "The losing customer sees 'Sorry, just sold out — here are 2 nearby stores with availability'",
+        "Inventory is atomically decremented; no oversell"
+      ],
+      "test_type": "integration",
+      "channels": ["web", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper"],
+      "maps_to_goal": "G1-reduce-oos-surprise",
+      "maps_to_br": "BR-06"
+    },
+    {
+      "id": "AC-006",
+      "title": "Loyalty accrual on pickup completion",
+      "priority": "P1",
+      "given": ["A customer with loyalty account completes pickup of a $50 order at Store #042"],
+      "when": "POS confirms the handoff",
+      "then": [
+        "Loyalty points are credited within 24 hours",
+        "Points value matches BR-01 earn rules for the relevant tier",
+        "Customer sees points in app next login"
+      ],
+      "test_type": "integration",
+      "channels": ["pos", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper"],
+      "maps_to_br": "BR-01"
+    },
+    {
+      "id": "AC-007",
+      "title": "Kiosk QR pickup flow",
+      "priority": "P0",
+      "given": ["A customer with an active reservation arrives at Store #042"],
+      "when": "They scan the QR code at the self-service kiosk",
+      "then": [
+        "Kiosk verifies the QR within 2s",
+        "Associate App receives 'arrived' signal",
+        "Kiosk shows locker/shelf code if applicable, otherwise 'see an associate'",
+        "After 3 failed scans, kiosk surfaces a 'see an associate' fallback and flashes a help beacon"
+      ],
+      "test_type": "e2e",
+      "channels": ["kiosk", "associate-app"],
+      "personas": ["Tier-2/3 loyalty shopper", "Store associate"]
+    },
+    {
+      "id": "AC-008",
+      "title": "Accessibility — PDP inventory module screen-reader",
+      "priority": "P0",
+      "given": ["A customer using VoiceOver or TalkBack"],
+      "when": "They navigate to the PDP inventory module",
+      "then": [
+        "The module is announced with role, state, and live-region updates",
+        "Store name, stock count, and staleness (if any) are all readable",
+        "Reservation CTA is operable with screen reader; focus order is logical"
+      ],
+      "test_type": "accessibility",
+      "channels": ["web", "ios", "android"],
+      "personas": ["Tier-2/3 loyalty shopper (AT user)"],
+      "acceptance_notes": "Axe automated + manual VO/TB verification required"
+    },
+    {
+      "id": "AC-009",
+      "title": "Performance at peak load",
+      "priority": "P0",
+      "given": ["Peak traffic at 12,000 RPS sustained on inventory API"],
+      "when": "The load test runs for 60 minutes",
+      "then": [
+        "p95 latency ≤ 400ms",
+        "Error rate ≤ 0.1%",
+        "No cache stampede observed",
+        "Graceful degradation kicks in if threshold breached"
+      ],
+      "test_type": "performance",
+      "channels": ["web", "ios", "android"]
+    },
+    {
+      "id": "AC-010",
+      "title": "Reservation expiry edge case",
+      "priority": "P1",
+      "given": ["A reservation exists and the customer does not arrive"],
+      "when": "The 90-minute window elapses",
+      "then": [
+        "Inventory is released atomically",
+        "Customer receives 'reservation expired' email with re-reserve link if still in stock",
+        "Associate receives 'expired' notification to return item to shelf"
+      ],
+      "test_type": "integration",
+      "channels": ["ios", "android", "associate-app"],
+      "maps_to_br": "BR-03"
+    },
+    {
+      "id": "AC-011",
+      "title": "Refund of BOPIS item before pickup",
+      "priority": "P1",
+      "given": ["A customer has an active reservation"],
+      "when": "They cancel before arriving",
+      "then": [
+        "Reservation is released within 10s",
+        "Payment authorization is voided (or refunded if captured) per BR-07",
+        "Inventory is returned to sellable stock",
+        "Associate notification is canceled if not yet actioned"
+      ],
+      "test_type": "integration",
+      "channels": ["web", "ios", "android", "associate-app"],
+      "maps_to_br": "BR-07"
+    },
+    {
+      "id": "AC-012",
+      "title": "Privacy — location signal consent",
+      "priority": "P0",
+      "given": ["A customer has not granted location permission"],
+      "when": "They reach the PDP with store-preference not set",
+      "then": [
+        "System does NOT request or infer precise location",
+        "User is offered a zip-code entry path",
+        "No location telemetry is emitted",
+        "Consent state is recorded with timestamp and scope per BR-08"
+      ],
+      "test_type": "security",
+      "channels": ["web", "ios", "android"],
+      "maps_to_br": "BR-08"
+    },
+    {
+      "id": "AC-013",
+      "title": "Partial fulfillment of multi-item order",
+      "priority": "P1",
+      "given": ["Customer reserves 2 items; one goes OOS between reserve and pick"],
+      "when": "Associate marks the picking complete",
+      "then": [
+        "Customer receives 'partial availability' notification with choice: proceed with available item or cancel entire order",
+        "Customer choice is honored within 5 min decision window",
+        "Non-picked item's reservation releases immediately"
+      ],
+      "test_type": "e2e",
+      "channels": ["associate-app", "ios", "android"],
+      "maps_to_br": "BR-09"
+    },
+    {
+      "id": "AC-014",
+      "title": "Observability events emitted",
+      "priority": "P0",
+      "given": ["Any BOPIS flow in use"],
+      "when": "Key state transitions occur",
+      "then": [
+        "Events are emitted for: reservation_created, reservation_confirmed, reservation_expired, pickup_arrived, pickup_completed, pickup_cancelled, degradation_activated",
+        "Each event carries correlation_id, store_id, sku, customer_hash, timestamp",
+        "Events land in observability pipeline within 60s",
+        "No PII appears in event payloads"
+      ],
+      "test_type": "contract",
+      "channels": ["web", "ios", "android", "pos", "associate-app", "kiosk"]
+    }
+  ],
+  "coverage_matrix": {
+    "goals": {
+      "G1-reduce-oos-surprise": ["AC-001", "AC-002", "AC-005"],
+      "G2-reduce-cycle-time": ["AC-004", "AC-007"],
+      "G3-never-block-browse": ["AC-003", "AC-009"],
+      "G4-loyalty-value": ["AC-006"],
+      "G5-accessible": ["AC-008"],
+      "G6-privacy-respectful": ["AC-012"]
+    },
+    "business_rules": {
+      "BR-01": ["AC-006"],
+      "BR-03": ["AC-002", "AC-010"],
+      "BR-05": ["AC-001"],
+      "BR-06": ["AC-005"],
+      "BR-07": ["AC-011"],
+      "BR-08": ["AC-012"],
+      "BR-09": ["AC-013"]
+    },
+    "capabilities_coverage": {
+      "real-time-inventory": { "happy": ["AC-001"], "edge": ["AC-003", "AC-005"], "error": ["AC-003"] },
+      "reservation": { "happy": ["AC-002"], "edge": ["AC-010", "AC-011"], "error": ["AC-005"] },
+      "associate-notification": { "happy": ["AC-004"], "edge": ["AC-010"], "error": [] },
+      "kiosk-pickup": { "happy": ["AC-007"], "edge": ["AC-007"], "error": ["AC-007"] },
+      "loyalty-accrual": { "happy": ["AC-006"], "edge": [], "error": [] }
+    }
+  }
+}

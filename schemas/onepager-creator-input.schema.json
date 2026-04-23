@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "onepager-creator-input.schema.json",
+  "title": "Retail One-Pager Creator — Input",
+  "type": "object",
+  "required": ["mode", "initiative_slug"],
+  "properties": {
+    "mode": { "enum": ["interactive", "batch", "update"] },
+    "initiative_slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "auto_approve": { "type": "boolean", "default": false, "description": "If true in batch mode, skip final review gate" },
+    "prior_version_path": { "type": "string", "description": "Required for mode=update" },
+    "update_reason": { "type": "string", "description": "Required for mode=update" },
+
+    "identity": {
+      "type": "object",
+      "properties": {
+        "initiative_name": { "type": "string" },
+        "product_lead": { "type": "string" },
+        "business_sponsor": { "type": "string" },
+        "retail_domains": {
+          "type": "array",
+          "items": { "enum": ["ecom", "in-store-pos", "loyalty", "fulfillment", "supply-chain", "merchandising", "marketing"] }
+        },
+        "channels": {
+          "type": "array",
+          "items": { "enum": ["web", "ios", "android", "pos", "associate-app", "kiosk", "contact-center", "email-sms"] }
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string", "description": "ISO country or region code (US, CA, EU, APAC, GLOBAL)" }
+        }
+      }
+    },
+
+    "problem": {
+      "type": "object",
+      "properties": {
+        "customer_pain": { "type": "string" },
+        "business_cost_today": { "type": "string", "description": "Quantified if possible ($, %, volume)" },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "reference"],
+            "properties": {
+              "type": { "enum": ["analytics", "voc", "ticket-volume", "competitor", "regulatory", "leadership-ask", "mystery-shop"] },
+              "reference": { "type": "string" },
+              "note": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "why_now": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "proposed_solution": { "type": "string" },
+
+    "target_audience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["segment", "channel"],
+        "properties": {
+          "segment": { "type": "string" },
+          "channel": { "type": "string" },
+          "annual_volume": { "type": "string" },
+          "why_they_matter": { "type": "string" }
+        }
+      }
+    },
+
+    "scope": {
+      "type": "object",
+      "required": ["in_scope", "out_of_scope"],
+      "properties": {
+        "in_scope": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "out_of_scope": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "deferred_v2": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "success_metrics": {
+      "type": "object",
+      "required": ["primary", "guardrails"],
+      "properties": {
+        "primary": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["metric", "baseline", "target", "window", "source"],
+            "properties": {
+              "metric": { "type": "string" },
+              "baseline": { "type": "string" },
+              "target": { "type": "string" },
+              "window": { "type": "string" },
+              "source": { "type": "string" }
+            }
+          }
+        },
+        "guardrails": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "rollout_timeline": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["phase", "window"],
+            "properties": {
+              "phase": { "enum": ["discovery", "build", "pilot", "ga", "hypercare"] },
+              "window": { "type": "string" },
+              "scope": { "type": "string" },
+              "exit_criteria": { "type": "string" }
+            }
+          }
+        },
+        "peak_season_freezes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "cost_loe": {
+      "type": "object",
+      "properties": {
+        "engineering_tshirt": { "enum": ["S", "M", "L", "XL"] },
+        "third_party_cost": { "type": "string" },
+        "infra_run_rate": { "type": "string" },
+        "capex_year1": { "type": "string" },
+        "opex_annual": { "type": "string" }
+      }
+    },
+
+    "dependencies_and_risks": {
+      "type": "object",
+      "properties": {
+        "platform_teams": { "type": "array", "items": { "type": "string" } },
+        "third_parties": { "type": "array", "items": { "type": "string" } },
+        "data_sources": { "type": "array", "items": { "type": "string" } },
+        "top_risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["risk", "likelihood", "impact", "mitigation"],
+            "properties": {
+              "risk": { "type": "string" },
+              "likelihood": { "enum": ["L", "M", "H"] },
+              "impact": { "enum": ["L", "M", "H"] },
+              "mitigation": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "compliance_flags": {
+      "type": "object",
+      "properties": {
+        "pci": { "enum": ["not-applicable", "flag-only", "material", "showstopper"] },
+        "privacy": { "enum": ["not-applicable", "flag-only", "material", "showstopper"] },
+        "accessibility": { "enum": ["not-applicable", "flag-only", "material", "showstopper"] },
+        "localization": { "enum": ["not-applicable", "flag-only", "material", "showstopper"] }
+      }
+    },
+
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  }
+}

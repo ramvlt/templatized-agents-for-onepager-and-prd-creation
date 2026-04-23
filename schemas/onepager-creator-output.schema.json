@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "onepager-creator-output.schema.json",
+  "title": "Retail One-Pager Creator — Output",
+  "type": "object",
+  "required": ["initiative_slug", "mode", "version", "status", "artifact_path", "quality_gates", "next_stage_ready"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["interactive", "batch", "update"] },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "status": { "enum": ["success", "partial", "failure"] },
+    "artifact_path": { "type": "string" },
+    "quality_gates": {
+      "type": "object",
+      "required": [
+        "all_sections_filled",
+        "primary_kpi_present",
+        "guardrail_kpi_present",
+        "out_of_scope_declared",
+        "compliance_addressed",
+        "no_architecture_leak",
+        "peak_season_checked"
+      ],
+      "properties": {
+        "all_sections_filled": { "type": "boolean" },
+        "primary_kpi_present": { "type": "boolean" },
+        "guardrail_kpi_present": { "type": "boolean" },
+        "out_of_scope_declared": { "type": "boolean" },
+        "compliance_addressed": { "type": "boolean" },
+        "no_architecture_leak": { "type": "boolean" },
+        "peak_season_checked": { "type": "boolean" }
+      }
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "evidence_gaps": { "type": "array", "items": { "type": "string" } },
+    "next_stage_ready": { "type": "boolean" },
+    "next_recommended_agent": { "type": "string" }
+  }
+}

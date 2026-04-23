@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prd-creator-output.schema.json",
+  "title": "Retail PRD Creator — Output",
+  "type": "object",
+  "required": ["initiative_slug", "mode", "version", "status", "artifacts", "quality_gates", "next_stage_ready"],
+  "properties": {
+    "initiative_slug": { "type": "string" },
+    "mode": { "enum": ["create", "update"] },
+    "version": { "type": "string", "pattern": "^v[0-9]+$" },
+    "status": { "enum": ["success", "partial", "failure"] },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path"],
+        "properties": {
+          "type": { "enum": ["prd", "acceptance_criteria", "business_rules", "scope_boundary", "nfrs"] },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "personas": { "type": "integer", "minimum": 0 },
+        "journeys": { "type": "integer", "minimum": 0 },
+        "capabilities": { "type": "integer", "minimum": 0 },
+        "acs": { "type": "integer", "minimum": 0 },
+        "brs": { "type": "integer", "minimum": 0 },
+        "nfrs": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "coverage_matrix_complete": { "type": "boolean" },
+    "quality_gates": {
+      "type": "object",
+      "properties": {
+        "sections_complete": { "type": "boolean" },
+        "coverage_complete": { "type": "boolean" },
+        "compliance_complete": { "type": "boolean" },
+        "no_architecture_leak": { "type": "boolean" },
+        "rollout_realistic": { "type": "boolean" }
+      }
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "next_stage_ready": { "type": "boolean" },
+    "next_recommended_agent": { "type": "string" }
+  }
+}
